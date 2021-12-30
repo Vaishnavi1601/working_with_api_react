@@ -5,35 +5,53 @@ import "./App.css";
 
 function App() {
   const [movies, setmovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function fetchMovieHandler() {
-    setIsLoading(true)
-    const response = await fetch("https://swapi.dev/api/films");
-    const data = await response.json();
+    setIsLoading(true);
+    setError(null);
 
-    const transforemedMovies = data.results.map((movieData) => {
-      return {
-        id: movieData.episode_id,
-        title: movieData.title,
-        openingText: movieData.opening_crawl,
-        releaseDate: movieData.release_Date,
-      };
-    });
-    setmovies(transforemedMovies);
-    setIsLoading(false)
+    try {
+      const response = await fetch("https://swapi.dev/api/films");
+      //throw this error if you have unsuccesfull response
+      if (!response.ok) {
+        throw new Error("Something went wrong!");
+      }
+      const data = await response.json();
+
+      const transforemedMovies = data.results.map((movieData) => {
+        return {
+          id: movieData.episode_id,
+          title: movieData.title,
+          openingText: movieData.opening_crawl,
+          releaseDate: movieData.release_Date,
+        };
+      });
+      setmovies(transforemedMovies);
+    } catch (error) {
+      setError(error.message);
+    }
+    setIsLoading(false);
   }
 
+  let content = <p>Found no movies </p>;
+
+  if (movies.length > 0) {
+    content = <MoviesList movies={movies} />;
+  }
+  if (error) {
+    content = <p>{error}</p>;
+  }
+  if (isLoading) {
+    content = <p>Loading...</p>;
+  }
   return (
     <React.Fragment>
       <section>
         <button onClick={fetchMovieHandler}>Fetch Movies</button>
       </section>
-      <section>
-        {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
-        {!isLoading && movies.length === 0 && <p>Found no movies.</p>}
-        {isLoading && <p>Loading...</p>}
-      </section>
+      <section>{content}</section>
     </React.Fragment>
   );
 }
